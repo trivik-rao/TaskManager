@@ -1,0 +1,18 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /tasks/{taskId} {
+      // Anyone can read public tasks (for the public feed and share links)
+      allow read: if resource.data.visibility == 'public'
+                  || (request.auth != null && request.auth.uid == resource.data.uid);
+
+      // Only signed-in users can create tasks, and only as themselves
+      allow create: if request.auth != null
+                    && request.auth.uid == request.resource.data.uid;
+
+      // Only the task owner can update or delete
+      allow update, delete: if request.auth != null
+                            && request.auth.uid == resource.data.uid;
+    }
+  }
+}

@@ -1,11 +1,12 @@
 'use strict';
 
-const CACHE = 'task-manager-v1';
+const CACHE = 'task-manager-v2';
 const ASSETS = [
   './',
   './index.html',
   './style.css',
   './app.js',
+  './firebase-config.js',
   './manifest.json',
   './icon.svg',
 ];
