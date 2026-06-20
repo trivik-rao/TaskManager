@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -15,7 +15,7 @@
 </head>
 <body>
 
-  <!-- Auth bar -->
+  <!-- Auth + settings bar -->
   <div id="auth-bar">
     <button id="sign-in-btn" class="btn btn-google">
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
@@ -31,6 +31,7 @@
       <span id="user-name"></span>
       <button id="sign-out-btn" class="btn btn-secondary btn-sm">Sign out</button>
     </div>
+    <button id="settings-btn" class="icon-btn" title="Appearance">&#9881;</button>
   </div>
 
   <header>
@@ -38,14 +39,23 @@
     <button id="add-task-btn" class="btn btn-primary hidden">+ Add Task</button>
   </header>
 
+  <!-- Main tabs -->
   <nav class="tabs" role="tablist">
     <button class="tab active" data-tab="my-tasks" role="tab">My Tasks</button>
     <button class="tab" data-tab="public-feed" role="tab">Public Feed</button>
   </nav>
 
   <main>
-    <!-- My Tasks / Board -->
+    <!-- My Tasks -->
     <div id="my-tasks-panel">
+      <!-- View switcher -->
+      <div id="view-switcher" class="view-switcher hidden">
+        <button class="view-btn active" data-view="board">&#9646; Board</button>
+        <button class="view-btn" data-view="today">&#128197; Today</button>
+        <button class="view-btn" data-view="week">&#128198; This Week</button>
+        <button class="view-btn" data-view="overdue">&#9888; Overdue</button>
+      </div>
+
       <div id="auth-prompt" class="empty-state hidden">
         <p>Sign in with Google to view and manage your tasks.</p>
       </div>
@@ -60,14 +70,11 @@
       <div id="feed-empty" class="empty-state hidden">
         <p>No public tasks yet. Be the first to share one!</p>
       </div>
-      <div id="feed-list" class="feed-grid"></div>
+      <div id="feed-list" class="smart-grid"></div>
     </div>
   </main>
 
-  <!-- FAB -->
   <button id="fab-btn" class="fab hidden" aria-label="Add Task">+</button>
-
-  <!-- Toast -->
   <div id="toast" class="toast hidden" aria-live="polite"></div>
 
   <!-- Task Modal -->
@@ -76,30 +83,25 @@
       <h2 id="modal-title">Add Task</h2>
       <form id="task-form" novalidate>
         <input type="hidden" id="task-id" />
-
         <div class="form-group">
           <label for="task-title">Title <span class="required">*</span></label>
           <input type="text" id="task-title" placeholder="Task title" required />
           <span class="field-error hidden" id="title-error">Title is required.</span>
         </div>
-
         <div class="form-group">
           <label for="task-description">Description</label>
           <textarea id="task-description" rows="3" placeholder="Optional description"></textarea>
         </div>
-
         <div class="form-group">
           <label for="task-due-date">Due Date</label>
           <input type="date" id="task-due-date" />
         </div>
-
         <div class="form-group">
           <label for="task-category">Category</label>
           <select id="task-category">
             <option value="">— Uncategorized —</option>
           </select>
         </div>
-
         <div class="form-group">
           <label>Visibility</label>
           <div class="visibility-toggle">
@@ -113,7 +115,6 @@
             </label>
           </div>
         </div>
-
         <div class="modal-actions">
           <button type="button" id="cancel-btn" class="btn btn-secondary">Cancel</button>
           <button type="submit" class="btn btn-primary">Save</button>
@@ -143,6 +144,39 @@
     </div>
   </div>
 
+  <!-- Settings Modal -->
+  <div id="settings-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal modal-settings">
+      <div class="settings-header">
+        <h2>&#9881; Appearance</h2>
+        <button id="settings-close" class="icon-btn">&#x2715;</button>
+      </div>
+
+      <div class="settings-section">
+        <h3>Theme</h3>
+        <div class="theme-options">
+          <button class="theme-btn" data-theme="light">&#9728; Light</button>
+          <button class="theme-btn" data-theme="dark">&#9790; Dark</button>
+          <button class="theme-btn" data-theme="system">&#128187; System</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Accent Color</h3>
+        <div id="accent-picker" class="accent-picker"></div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Background</h3>
+        <div id="bg-picker" class="bg-picker"></div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="settings-done" class="btn btn-primary">Done</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Shared Task Detail Modal -->
   <div id="detail-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true">
     <div class="modal modal-sm">
@@ -153,11 +187,9 @@
     </div>
   </div>
 
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-  <!-- Sortable.js for drag-and-drop -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
   <script src="firebase-config.js"></script>
   <script src="app.js"></script>
