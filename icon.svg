@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#4f46e5"/>
+  <!-- task rows -->
+  <rect x="156" y="150" width="210" height="26" rx="13" fill="white" opacity="0.92"/>
+  <rect x="156" y="243" width="210" height="26" rx="13" fill="white" opacity="0.92"/>
+  <rect x="156" y="336" width="148" height="26" rx="13" fill="white" opacity="0.92"/>
+  <!-- circles -->
+  <circle cx="114" cy="163" r="20" fill="white"/>
+  <circle cx="114" cy="256" r="20" fill="white"/>
+  <circle cx="114" cy="349" r="20" fill="white" opacity="0.45"/>
+  <!-- checkmarks -->
+  <polyline points="104,163 112,171 125,153" stroke="#4f46e5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <polyline points="104,256 112,264 125,246" stroke="#4f46e5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
