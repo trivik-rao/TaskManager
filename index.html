@@ -38,40 +38,39 @@
     <button id="add-task-btn" class="btn btn-primary hidden">+ Add Task</button>
   </header>
 
-  <!-- Tabs -->
   <nav class="tabs" role="tablist">
-    <button class="tab active" data-tab="my-tasks" role="tab" aria-selected="true">My Tasks</button>
-    <button class="tab" data-tab="public-feed" role="tab" aria-selected="false">Public Feed</button>
+    <button class="tab active" data-tab="my-tasks" role="tab">My Tasks</button>
+    <button class="tab" data-tab="public-feed" role="tab">Public Feed</button>
   </nav>
 
   <main>
-    <!-- My Tasks Panel -->
-    <div id="my-tasks-panel" role="tabpanel">
+    <!-- My Tasks / Board -->
+    <div id="my-tasks-panel">
       <div id="auth-prompt" class="empty-state hidden">
         <p>Sign in with Google to view and manage your tasks.</p>
       </div>
       <div id="empty-state" class="empty-state hidden">
-        <p>No tasks yet. Click <strong>+ Add Task</strong> to get started.</p>
+        <p>No categories yet.<br>Click <strong>+ New Category</strong> in the board to get started.</p>
       </div>
-      <div id="task-list"></div>
+      <div id="board" class="board"></div>
     </div>
 
-    <!-- Public Feed Panel -->
-    <div id="public-feed-panel" class="hidden" role="tabpanel">
+    <!-- Public Feed -->
+    <div id="public-feed-panel" class="hidden">
       <div id="feed-empty" class="empty-state hidden">
         <p>No public tasks yet. Be the first to share one!</p>
       </div>
-      <div id="feed-list"></div>
+      <div id="feed-list" class="feed-grid"></div>
     </div>
   </main>
 
-  <!-- FAB (mobile add button) -->
+  <!-- FAB -->
   <button id="fab-btn" class="fab hidden" aria-label="Add Task">+</button>
 
   <!-- Toast -->
   <div id="toast" class="toast hidden" aria-live="polite"></div>
 
-  <!-- Task Modal (add / edit) -->
+  <!-- Task Modal -->
   <div id="modal-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal">
       <h2 id="modal-title">Add Task</h2>
@@ -92,6 +91,13 @@
         <div class="form-group">
           <label for="task-due-date">Due Date</label>
           <input type="date" id="task-due-date" />
+        </div>
+
+        <div class="form-group">
+          <label for="task-category">Category</label>
+          <select id="task-category">
+            <option value="">— Uncategorized —</option>
+          </select>
         </div>
 
         <div class="form-group">
@@ -116,9 +122,30 @@
     </div>
   </div>
 
-  <!-- Task Detail Modal (share links) -->
+  <!-- Category Modal -->
+  <div id="cat-modal-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal modal-sm">
+      <h2>New Category</h2>
+      <form id="cat-form" novalidate>
+        <div class="form-group">
+          <label for="cat-name">Name <span class="required">*</span></label>
+          <input type="text" id="cat-name" placeholder="e.g. Work, Study, Projects" required />
+        </div>
+        <div class="form-group">
+          <label>Color</label>
+          <div id="color-picker" class="color-picker"></div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="cat-cancel-btn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Shared Task Detail Modal -->
   <div id="detail-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true">
-    <div class="modal">
+    <div class="modal modal-sm">
       <div id="detail-content"></div>
       <div class="modal-actions" style="margin-top:1.2rem">
         <button id="detail-close" class="btn btn-secondary">Close</button>
@@ -126,10 +153,12 @@
     </div>
   </div>
 
-  <!-- Firebase SDK (compat) -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <!-- Sortable.js for drag-and-drop -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
   <script src="firebase-config.js"></script>
   <script src="app.js"></script>
 </body>
