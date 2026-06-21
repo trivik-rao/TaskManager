@@ -95,8 +95,19 @@
     <button id="settings-btn" class="icon-btn" title="Appearance">&#9881;</button>
   </div>
 
-  <header>
-    <h1>Task Manager</h1>
+  <header class="app-header">
+    <div class="brand-lockup">
+      <!-- Unique hexagonal badge logo: precision + task completion -->
+      <svg class="header-logo" width="36" height="40" viewBox="0 0 48 54" fill="none" aria-label="Task Manager">
+        <path d="M24 2 L46 14 L46 40 L24 52 L2 40 L2 14 Z" fill="#060e1c" stroke="#1c69d4" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M24 9 L40 18 L40 36 L24 45 L8 36 L8 18 Z" fill="none" stroke="#1c69d4" stroke-width="0.6" opacity="0.35"/>
+        <polyline points="13,28 22,37 35,20" stroke="#1c69d4" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+      <div class="brand-text">
+        <div class="brand-name">Task Manager</div>
+        <div class="brand-tagline">The Ultimate Task Machine.</div>
+      </div>
+    </div>
     <button id="add-task-btn" class="btn btn-primary hidden">+ Add Task</button>
   </header>
 

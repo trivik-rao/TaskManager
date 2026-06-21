@@ -6,14 +6,14 @@ const UNCAT_ID   = '__uncat__';
 const PREFS_KEY  = 'tm-prefs';
 
 const ACCENT_COLORS = [
-  { color:'#4f46e5', hover:'#4338ca', name:'Indigo'  },
-  { color:'#2563eb', hover:'#1d4ed8', name:'Blue'    },
-  { color:'#059669', hover:'#047857', name:'Emerald' },
-  { color:'#7c3aed', hover:'#6d28d9', name:'Purple'  },
-  { color:'#e11d48', hover:'#be123c', name:'Rose'    },
-  { color:'#ea580c', hover:'#c2410c', name:'Orange'  },
-  { color:'#0891b2', hover:'#0e7490', name:'Cyan'    },
-  { color:'#ca8a04', hover:'#a16207', name:'Gold'    },
+  { color:'#1c69d4', hover:'#1558b0', name:'BMW Blue' },
+  { color:'#4f46e5', hover:'#4338ca', name:'Indigo'   },
+  { color:'#2563eb', hover:'#1d4ed8', name:'Blue'     },
+  { color:'#059669', hover:'#047857', name:'Emerald'  },
+  { color:'#7c3aed', hover:'#6d28d9', name:'Purple'   },
+  { color:'#e11d48', hover:'#be123c', name:'Rose'     },
+  { color:'#ea580c', hover:'#c2410c', name:'Orange'   },
+  { color:'#0891b2', hover:'#0e7490', name:'Cyan'     },
 ];
 
 const BG_OPTIONS = [
@@ -139,7 +139,7 @@ function hexToRgb(hex) {
 function initTheme() {
   const p = loadPrefs();
   applyTheme(p.theme || 'system');
-  applyAccent(p.accent || '#4f46e5');
+  applyAccent(p.accent || '#1c69d4');
   applyBg(p.bg || 'default');
 }
 
@@ -385,6 +385,7 @@ function buildLane(cat, tasks, isUncat = false) {
   const lane = document.createElement('div');
   lane.className = 'lane';
   lane.dataset.catId = cat.id;
+  lane.style.setProperty('--lane-color', cat.color);
 
   lane.innerHTML = `
     <div class="lane-header">

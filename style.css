@@ -1,8 +1,8 @@
 /* ── Variables & themes ──────────────────────────────────────────────────── */
 :root {
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --primary-rgb: 79,70,229;
+  --primary: #1c69d4;
+  --primary-hover: #1558b0;
+  --primary-rgb: 28,105,212;
   --page-bg: #f4f6f9;
   --bg: #ffffff;
   --surface: #ffffff;
@@ -565,4 +565,130 @@ html[data-theme="dark"] .toast { background: #f1f5f9; color: #0f172a; }
   .wlc-content { padding: 2rem 0 4.5rem; }
   .wlc-headline { font-size: 2.3rem; }
   .wlc-features { align-self: flex-start; }
+}
+
+/* ── Premium App Chrome (BMW-inspired) ───────────────────────────────────── */
+
+/* Auth bar — dark precision strip */
+#auth-bar {
+  background: #05090f;
+  border-bottom: 1px solid rgba(28,105,212,0.22);
+  min-height: 44px;
+}
+#auth-bar #user-name { color: #a8c0d8; }
+#auth-bar .admin-badge {
+  background: rgba(28,105,212,0.18);
+  color: #6aadec;
+  border: 1px solid rgba(28,105,212,0.35);
+}
+#auth-bar .btn-secondary {
+  background: rgba(255,255,255,0.06);
+  color: #7a9ab8;
+  border: 1px solid rgba(255,255,255,0.09);
+  font-size: 0.75rem;
+}
+#auth-bar .btn-secondary:hover {
+  background: rgba(28,105,212,0.2);
+  color: #b0ccde;
+  border-color: rgba(28,105,212,0.4);
+}
+#auth-bar .icon-btn {
+  background: rgba(255,255,255,0.04);
+  color: #5a7a96;
+  border-radius: 4px;
+}
+#auth-bar .icon-btn:hover {
+  background: rgba(28,105,212,0.2);
+  color: #8ab0cc;
+}
+.user-avatar { border-color: rgba(28,105,212,0.4); }
+
+/* Header — premium brand bar (always dark, ignores theme) */
+header {
+  background: #080f1c;
+  border-bottom: 1px solid rgba(28,105,212,0.18);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.55);
+  padding: 0 1.5rem;
+  min-height: 64px;
+}
+header h1 { display: none; }
+
+.brand-lockup {
+  display: flex; align-items: center; gap: 0.85rem;
+}
+.header-logo {
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 8px rgba(28,105,212,0.4));
+}
+.brand-text {
+  display: flex; flex-direction: column; gap: 0.18rem; line-height: 1;
+}
+.brand-name {
+  font-size: 0.72rem; font-weight: 800;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: #e8f2fc;
+}
+.brand-tagline {
+  font-size: 0.54rem; font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: #2a5a8a;
+}
+
+/* Add Task button — BMW-style CTA */
+#add-task-btn {
+  background: #1c69d4;
+  border-radius: 2px;
+  font-size: 0.72rem; font-weight: 800;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 0.55rem 1.2rem; min-height: 36px;
+  box-shadow: 0 2px 12px rgba(28,105,212,0.35);
+}
+#add-task-btn:hover {
+  background: #1558b0;
+  box-shadow: 0 4px 20px rgba(28,105,212,0.5);
+}
+
+/* Tab bar — dark premium nav */
+.tabs {
+  background: #080f1c;
+  border-bottom: 1px solid rgba(28,105,212,0.12);
+}
+.tab {
+  color: rgba(140,172,202,0.45);
+  font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 0.8rem 1.1rem;
+}
+.tab.active { color: #e0edf8; border-bottom-color: #1c69d4; }
+.tab:hover:not(.active) { color: rgba(140,172,202,0.8); }
+
+/* View switcher — BMW blue active state */
+.view-switcher { padding-top: 0.85rem; padding-left: 1.25rem; padding-right: 1.25rem; }
+.view-btn.active { background: #1c69d4; border-color: #1c69d4; }
+
+/* Lane color accent strip (set via JS --lane-color var) */
+.lane:not(.lane-new) {
+  border-top: 3px solid var(--lane-color, #1c69d4);
+}
+
+/* Task card subtle enhancements */
+.task-card {
+  border-radius: 6px;
+}
+.task-card:hover {
+  box-shadow: 0 4px 16px rgba(28,105,212,0.12);
+  border-color: rgba(28,105,212,0.25);
+}
+
+/* FAB — BMW blue */
+.fab { background: #1c69d4; box-shadow: 0 4px 16px rgba(28,105,212,0.45); }
+.fab:hover { background: #1558b0; }
+
+/* Mobile chrome */
+@media (max-width: 600px) {
+  header { min-height: 56px; padding: 0 1rem; }
+  .brand-name { font-size: 0.66rem; letter-spacing: 0.18em; }
+  .brand-tagline { display: none; }
+  .header-logo { width: 30px; height: 34px; }
+  #add-task-btn { display: none; }
 }
