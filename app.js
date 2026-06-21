@@ -32,15 +32,22 @@ const googleProvider = new firebase.auth.GoogleAuthProvider();
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let currentUser   = null;
+let isAdmin       = false;
 let myTasks       = [];
+let assignedTasks = [];
+let allTasks      = [];
 let publicTasks   = [];
 let categories    = [];
+let allUsers      = [];
 let activeTab     = 'my-tasks';
 let activeView    = 'board';
 let selectedColor = LANE_COLORS[0];
 let unsubMyTasks  = null;
+let unsubAssigned = null;
+let unsubAllTasks = null;
 let unsubCats     = null;
 let unsubFeed     = null;
+let unsubUsers    = null;
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const signInBtn      = document.getElementById('sign-in-btn');
@@ -48,6 +55,7 @@ const signOutBtn     = document.getElementById('sign-out-btn');
 const userInfo       = document.getElementById('user-info');
 const userPhoto      = document.getElementById('user-photo');
 const userNameEl     = document.getElementById('user-name');
+const adminBadge     = document.getElementById('admin-badge');
 const addTaskBtn     = document.getElementById('add-task-btn');
 const fabBtn         = document.getElementById('fab-btn');
 const tabs           = document.querySelectorAll('.tab');
@@ -63,10 +71,12 @@ const modalOverlay   = document.getElementById('modal-overlay');
 const modalTitle     = document.getElementById('modal-title');
 const taskForm       = document.getElementById('task-form');
 const taskIdInput    = document.getElementById('task-id');
+const taskOwnerUid   = document.getElementById('task-owner-uid');
 const titleInput     = document.getElementById('task-title');
 const descInput      = document.getElementById('task-description');
 const dueDateInput   = document.getElementById('task-due-date');
 const categorySelect = document.getElementById('task-category');
+const assigneeSelect = document.getElementById('task-assignee');
 const visInputs      = document.querySelectorAll('input[name="visibility"]');
 const cancelBtn      = document.getElementById('cancel-btn');
 const titleError     = document.getElementById('title-error');
@@ -140,9 +150,7 @@ mql.addEventListener('change', () => {
 // ── Settings UI ───────────────────────────────────────────────────────────────
 function openSettings() {
   const p = loadPrefs();
-  // Theme buttons
   document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === (p.theme || 'system')));
-  // Accent picker
   accentPickerEl.innerHTML = '';
   ACCENT_COLORS.forEach(a => {
     const sw = document.createElement('button');
@@ -154,7 +162,6 @@ function openSettings() {
     sw.addEventListener('click', () => { savePrefs({ accent: a.color }); applyAccent(a.color); });
     accentPickerEl.appendChild(sw);
   });
-  // Bg picker
   bgPickerEl.innerHTML = '';
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   BG_OPTIONS.forEach(bg => {
@@ -174,16 +181,35 @@ function openSettings() {
 function closeSettings() { settingsOv.classList.add('hidden'); }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
-auth.onAuthStateChanged(user => {
+auth.onAuthStateChanged(async user => {
   currentUser = user;
-  updateAuthUI();
   if (user) {
+    // Save/update user profile so others can see them in assign-to dropdown
+    db.collection('users').doc(user.uid).set({
+      uid: user.uid,
+      name: user.displayName || '',
+      email: user.email || '',
+      photo: user.photoURL || '',
+    }, { merge: true }).catch(() => {});
+
+    // Check admin status
+    try {
+      const adminDoc = await db.collection('admins').doc(user.uid).get();
+      isAdmin = adminDoc.exists;
+    } catch { isAdmin = false; }
+
+    updateAuthUI();
     subscribeMyTasks();
+    subscribeAssigned();
     subscribeCats();
+    subscribeUsers();
+    if (isAdmin) subscribeAllTasks();
   } else {
-    [unsubMyTasks, unsubCats].forEach(u => u && u());
-    unsubMyTasks = unsubCats = null;
-    myTasks = []; categories = [];
+    isAdmin = false;
+    [unsubMyTasks, unsubAssigned, unsubAllTasks, unsubCats, unsubUsers].forEach(u => u && u());
+    unsubMyTasks = unsubAssigned = unsubAllTasks = unsubCats = unsubUsers = null;
+    myTasks = []; assignedTasks = []; allTasks = []; categories = []; allUsers = [];
+    updateAuthUI();
     if (activeTab === 'my-tasks') refreshMyTasks();
   }
 });
@@ -198,6 +224,8 @@ function updateAuthUI() {
   if (on) {
     userPhoto.src = currentUser.photoURL || '';
     userNameEl.textContent = currentUser.displayName || currentUser.email;
+    adminBadge.classList.toggle('hidden', !isAdmin);
+    document.querySelectorAll('.admin-only').forEach(el => el.classList.toggle('hidden', !isAdmin));
   }
 }
 
@@ -215,6 +243,26 @@ function subscribeMyTasks() {
     }, e => console.error('tasks:', e));
 }
 
+function subscribeAssigned() {
+  if (unsubAssigned) unsubAssigned();
+  unsubAssigned = db.collection('tasks').where('assigneeId', '==', currentUser.uid)
+    .onSnapshot(snap => {
+      assignedTasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      assignedTasks.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+      if (activeTab === 'my-tasks' && activeView === 'assigned') refreshMyTasks();
+    }, e => console.error('assigned:', e));
+}
+
+function subscribeAllTasks() {
+  if (unsubAllTasks) unsubAllTasks();
+  unsubAllTasks = db.collection('tasks')
+    .onSnapshot(snap => {
+      allTasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      allTasks.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+      if (activeTab === 'my-tasks' && activeView === 'admin') refreshMyTasks();
+    }, e => console.error('allTasks:', e));
+}
+
 function subscribeCats() {
   if (unsubCats) unsubCats();
   unsubCats = db.collection('categories').where('uid', '==', currentUser.uid)
@@ -224,6 +272,14 @@ function subscribeCats() {
       if (activeTab === 'my-tasks') refreshMyTasks();
       populateCategorySelect();
     }, e => console.error('cats:', e));
+}
+
+function subscribeUsers() {
+  if (unsubUsers) unsubUsers();
+  unsubUsers = db.collection('users').onSnapshot(snap => {
+    allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    allUsers.sort((a,b) => (a.name||'').localeCompare(b.name||''));
+  }, e => console.error('users:', e));
 }
 
 function subscribeFeed() {
@@ -286,7 +342,9 @@ function catFor(id) { return categories.find(c => c.id === id); }
 
 // ── My Tasks dispatcher ───────────────────────────────────────────────────────
 function refreshMyTasks() {
-  if (activeView === 'board') renderBoard();
+  if (activeView === 'board')    renderBoard();
+  else if (activeView === 'assigned') renderAssignedView();
+  else if (activeView === 'admin')    renderAdminView();
   else renderSmartView(activeView);
 }
 
@@ -355,13 +413,13 @@ function buildLane(cat, tasks, isUncat = false) {
   return lane;
 }
 
-function buildCard(task, showCat = false) {
+function buildCard(task, showCat = false, adminMode = false) {
   const card = document.createElement('div');
   card.className = 'task-card' + (task.completed ? ' completed' : '');
   card.dataset.taskId = task.id;
 
-  const badge = dueBadge(task);
-  const cat = catFor(task.categoryId);
+  const badge  = dueBadge(task);
+  const cat    = catFor(task.categoryId);
   const catChip = showCat && cat
     ? `<span class="cat-chip" style="--chip-color:${cat.color}">${escapeHTML(cat.name)}</span>`
     : showCat && !cat
@@ -369,30 +427,43 @@ function buildCard(task, showCat = false) {
     : '';
   const visBadge = task.visibility === 'public' ? '<span class="badge badge-public">Public</span>' : '';
   const shareBtn = task.visibility === 'public' ? `<button class="btn btn-share share-btn">&#128279;</button>` : '';
+  const assigneeChip = task.assigneeId
+    ? `<span class="assignee-chip">&#128100; ${escapeHTML(task.assigneeName || 'Assigned')}</span>`
+    : '';
+  const ownerChip = adminMode && task.ownerName
+    ? `<span class="owner-chip">by ${escapeHTML(task.ownerName)}</span>`
+    : '';
+
+  const canEdit = isAdmin || (currentUser && task.uid === currentUser.uid);
 
   card.innerHTML = `
-    ${catChip ? `<div class="card-cat-row">${catChip}</div>` : ''}
+    ${catChip || ownerChip ? `<div class="card-cat-row">${catChip}${ownerChip}</div>` : ''}
     <div class="task-card-top">
       <input type="checkbox" class="task-checkbox" aria-label="Mark complete" ${task.completed ? 'checked' : ''} />
       <span class="task-title">${escapeHTML(task.title)}</span>
     </div>
     ${task.description ? `<p class="task-description">${escapeHTML(task.description)}</p>` : ''}
+    ${assigneeChip ? `<div class="card-assignee-row">${assigneeChip}</div>` : ''}
     <div class="task-meta">
       ${task.dueDate ? `<span class="due-date">Due: ${formatDate(task.dueDate)}</span>` : ''}
       ${badge ? `<span class="badge ${badge.cls}">${badge.label}</span>` : ''}
       ${visBadge}
     </div>
     <div class="task-actions">
-      <button class="btn btn-edit edit-btn">Edit</button>
+      ${canEdit ? `<button class="btn btn-edit edit-btn">Edit</button>` : ''}
       ${shareBtn}
-      <button class="btn btn-danger delete-btn">Delete</button>
+      ${canEdit ? `<button class="btn btn-danger delete-btn">Delete</button>` : ''}
     </div>
   `;
 
   card.querySelector('.task-checkbox').addEventListener('change', () => toggleComplete(task.id, task.completed));
-  card.querySelector('.edit-btn').addEventListener('click', () => openModal(task));
-  card.querySelector('.delete-btn').addEventListener('click', () => deleteTask(task.id));
-  if (task.visibility === 'public') card.querySelector('.share-btn').addEventListener('click', () => copyShareLink(task.shareToken));
+  if (canEdit) {
+    card.querySelector('.edit-btn').addEventListener('click', () => openModal(task));
+    card.querySelector('.delete-btn').addEventListener('click', () => deleteTask(task.id));
+  }
+  if (task.visibility === 'public') {
+    card.querySelector('.share-btn').addEventListener('click', () => copyShareLink(task.shareToken));
+  }
 
   return card;
 }
@@ -429,7 +500,6 @@ function renderSmartView(view) {
   if (view === 'overdue') filtered = myTasks.filter(t => !t.completed && t.dueDate && t.dueDate < today);
 
   const meta = SMART_LABELS[view];
-
   const header = document.createElement('div');
   header.className = 'smart-header';
   header.innerHTML = `<h2 class="smart-title">${meta.title}</h2><span class="smart-count">${filtered.length} task${filtered.length !== 1 ? 's' : ''}</span>`;
@@ -446,6 +516,58 @@ function renderSmartView(view) {
   const grid = document.createElement('div');
   grid.className = 'smart-grid';
   filtered.forEach(t => grid.appendChild(buildCard(t, true)));
+  board.appendChild(grid);
+}
+
+// ── Assigned to Me view ───────────────────────────────────────────────────────
+function renderAssignedView() {
+  board.innerHTML = '';
+  if (!currentUser) { authPrompt.classList.remove('hidden'); return; }
+  authPrompt.classList.add('hidden');
+  emptyState.classList.add('hidden');
+
+  const header = document.createElement('div');
+  header.className = 'smart-header';
+  header.innerHTML = `<h2 class="smart-title">Assigned to Me</h2><span class="smart-count">${assignedTasks.length} task${assignedTasks.length !== 1 ? 's' : ''}</span>`;
+  board.appendChild(header);
+
+  if (assignedTasks.length === 0) {
+    const msg = document.createElement('div');
+    msg.className = 'empty-state';
+    msg.innerHTML = '<p>No tasks assigned to you yet.</p>';
+    board.appendChild(msg);
+    return;
+  }
+
+  const grid = document.createElement('div');
+  grid.className = 'smart-grid';
+  assignedTasks.forEach(t => grid.appendChild(buildCard(t, true)));
+  board.appendChild(grid);
+}
+
+// ── Admin: All Tasks view ─────────────────────────────────────────────────────
+function renderAdminView() {
+  board.innerHTML = '';
+  if (!currentUser || !isAdmin) return;
+  authPrompt.classList.add('hidden');
+  emptyState.classList.add('hidden');
+
+  const header = document.createElement('div');
+  header.className = 'smart-header';
+  header.innerHTML = `<h2 class="smart-title">&#128737; All Tasks</h2><span class="smart-count">${allTasks.length} total</span>`;
+  board.appendChild(header);
+
+  if (allTasks.length === 0) {
+    const msg = document.createElement('div');
+    msg.className = 'empty-state';
+    msg.innerHTML = '<p>No tasks found.</p>';
+    board.appendChild(msg);
+    return;
+  }
+
+  const grid = document.createElement('div');
+  grid.className = 'smart-grid';
+  allTasks.forEach(t => grid.appendChild(buildCard(t, true, true)));
   board.appendChild(grid);
 }
 
@@ -505,12 +627,14 @@ function switchView(view) {
 // ── Task Modal ────────────────────────────────────────────────────────────────
 function openModal(task, catId = null) {
   if (!currentUser) { signIn(); return; }
-  taskIdInput.value  = task?.id || '';
-  titleInput.value   = task?.title || '';
-  descInput.value    = task?.description || '';
-  dueDateInput.value = task?.dueDate || '';
+  taskIdInput.value     = task?.id || '';
+  taskOwnerUid.value    = task?.uid || currentUser.uid;
+  titleInput.value      = task?.title || '';
+  descInput.value       = task?.description || '';
+  dueDateInput.value    = task?.dueDate || '';
   setVis(task?.visibility || 'private');
   populateCategorySelect(task?.categoryId ?? catId);
+  populateAssigneeSelect(task?.assigneeId || '');
   modalTitle.textContent = task ? 'Edit Task' : 'Add Task';
   titleInput.classList.remove('invalid');
   titleError.classList.add('hidden');
@@ -525,9 +649,14 @@ async function handleFormSubmit(e) {
   const title = titleInput.value.trim();
   if (!title) { titleInput.classList.add('invalid'); titleError.classList.remove('hidden'); titleInput.focus(); return; }
 
-  const id = taskIdInput.value;
+  const id       = taskIdInput.value;
+  const ownerUid = taskOwnerUid.value || currentUser.uid;
+  const assigneeId   = assigneeSelect.value || null;
+  const assigneeUser = assigneeId ? allUsers.find(u => u.id === assigneeId) : null;
+  const assigneeName = assigneeUser ? (assigneeUser.name || assigneeUser.email || '') : '';
+
   const data = {
-    uid: currentUser.uid,
+    uid: ownerUid,
     ownerName: currentUser.displayName || '',
     ownerPhoto: currentUser.photoURL || '',
     title,
@@ -535,6 +664,8 @@ async function handleFormSubmit(e) {
     dueDate: dueDateInput.value,
     categoryId: categorySelect.value || null,
     visibility: getVis(),
+    assigneeId,
+    assigneeName,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
   };
 
@@ -542,12 +673,15 @@ async function handleFormSubmit(e) {
     if (id) {
       await db.collection('tasks').doc(id).update(data);
     } else {
-      data.completed = false;
-      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      data.completed  = false;
+      data.createdAt  = firebase.firestore.FieldValue.serverTimestamp();
       data.shareToken = genToken();
       await db.collection('tasks').add(data);
     }
     closeModal();
+    if (assigneeId && assigneeId !== currentUser.uid) {
+      showToast(`Assigned to ${assigneeName || 'user'}`);
+    }
   } catch (err) { showToast('Error saving: ' + err.message); }
 }
 
@@ -570,6 +704,17 @@ function populateCategorySelect(selectedId = null) {
     o.value = c.id; o.textContent = c.name;
     if (c.id === curr) o.selected = true;
     categorySelect.appendChild(o);
+  });
+}
+
+function populateAssigneeSelect(selectedId = '') {
+  assigneeSelect.innerHTML = '<option value="">— Unassigned —</option>';
+  allUsers.forEach(u => {
+    const o = document.createElement('option');
+    o.value = u.id;
+    o.textContent = u.name || u.email || u.id;
+    if (u.id === selectedId) o.selected = true;
+    assigneeSelect.appendChild(o);
   });
 }
 
@@ -630,7 +775,8 @@ async function loadSharedTask(token) {
       if (task.visibility !== 'public') { detailContent.innerHTML = '<p style="color:var(--text-muted)">This task is private.</p>'; }
       else {
         const badge = dueBadge(task);
-        const av = task.ownerPhoto ? `<img src="${escapeHTML(task.ownerPhoto)}" class="owner-avatar" alt="" />`
+        const av = task.ownerPhoto
+          ? `<img src="${escapeHTML(task.ownerPhoto)}" class="owner-avatar" alt="" />`
           : `<div class="owner-avatar owner-avatar-fallback">${escapeHTML((task.ownerName||'?')[0])}</div>`;
         detailContent.innerHTML = `
           <div class="task-owner" style="margin-bottom:.8rem">${av}<span class="owner-name">${escapeHTML(task.ownerName||'Anonymous')}</span></div>
