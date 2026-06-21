@@ -1,9 +1,13 @@
 'use strict';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const LANE_COLORS = ['#4f46e5','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#f97316','#14b8a6','#64748b'];
-const UNCAT_ID   = '__uncat__';
-const PREFS_KEY  = 'tm-prefs';
+const ADMIN_EMAIL     = 'rao.trivikram@gmail.com';
+const GUEST_TASKS_KEY = 'tm-guest-tasks';
+const GUEST_CATS_KEY  = 'tm-guest-cats';
+
+const LANE_COLORS = ['#1c69d4','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#f97316','#14b8a6','#64748b'];
+const UNCAT_ID    = '__uncat__';
+const PREFS_KEY   = 'tm-prefs';
 
 const ACCENT_COLORS = [
   { color:'#1c69d4', hover:'#1558b0', name:'BMW Blue' },
@@ -28,11 +32,11 @@ const BG_OPTIONS = [
 // ── Firebase ──────────────────────────────────────────────────────────────────
 const auth = firebase.auth();
 const db   = firebase.firestore();
-const googleProvider = new firebase.auth.GoogleAuthProvider();
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let currentUser   = null;
 let isAdmin       = false;
+let isGuestMode   = false;
 let myTasks       = [];
 let assignedTasks = [];
 let allTasks      = [];
@@ -50,52 +54,55 @@ let unsubFeed     = null;
 let unsubUsers    = null;
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
-const signInBtn      = document.getElementById('sign-in-btn');
-const signOutBtn     = document.getElementById('sign-out-btn');
-const userInfo       = document.getElementById('user-info');
-const userPhoto      = document.getElementById('user-photo');
-const userNameEl     = document.getElementById('user-name');
-const adminBadge     = document.getElementById('admin-badge');
-const welcomeScreen  = document.getElementById('welcome-screen');
-const welcomeSignIn  = document.getElementById('welcome-sign-in');
-const addTaskBtn     = document.getElementById('add-task-btn');
-const fabBtn         = document.getElementById('fab-btn');
-const tabs           = document.querySelectorAll('.tab');
-const myTasksPanel   = document.getElementById('my-tasks-panel');
-const publicPanel    = document.getElementById('public-feed-panel');
-const viewSwitcher   = document.getElementById('view-switcher');
-const board          = document.getElementById('board');
-const emptyState     = document.getElementById('empty-state');
-const authPrompt     = document.getElementById('auth-prompt');
-const feedList       = document.getElementById('feed-list');
-const feedEmpty      = document.getElementById('feed-empty');
-const modalOverlay   = document.getElementById('modal-overlay');
-const modalTitle     = document.getElementById('modal-title');
-const taskForm       = document.getElementById('task-form');
-const taskIdInput    = document.getElementById('task-id');
-const titleInput     = document.getElementById('task-title');
-const descInput      = document.getElementById('task-description');
-const dueDateInput   = document.getElementById('task-due-date');
-const categorySelect = document.getElementById('task-category');
-const assigneeSelect = document.getElementById('task-assignee');
-const visInputs      = document.querySelectorAll('input[name="visibility"]');
-const cancelBtn      = document.getElementById('cancel-btn');
-const titleError     = document.getElementById('title-error');
-const catModalOv     = document.getElementById('cat-modal-overlay');
-const catForm        = document.getElementById('cat-form');
-const catNameInput   = document.getElementById('cat-name');
-const catCancelBtn   = document.getElementById('cat-cancel-btn');
-const colorPickerEl  = document.getElementById('color-picker');
-const settingsBtn    = document.getElementById('settings-btn');
-const settingsOv     = document.getElementById('settings-overlay');
-const settingsClose  = document.getElementById('settings-close');
-const settingsDone   = document.getElementById('settings-done');
-const accentPickerEl = document.getElementById('accent-picker');
-const bgPickerEl     = document.getElementById('bg-picker');
-const detailOverlay  = document.getElementById('detail-overlay');
-const detailContent  = document.getElementById('detail-content');
-const detailClose    = document.getElementById('detail-close');
-const toastEl        = document.getElementById('toast');
+const welcomeScreen      = document.getElementById('welcome-screen');
+const adminLoginForm     = document.getElementById('admin-login-form');
+const passwordInput      = document.getElementById('admin-password');
+const loginError         = document.getElementById('login-error');
+const welcomeGuestBtn    = document.getElementById('welcome-guest-btn');
+const userInfo           = document.getElementById('user-info');
+const userNameEl         = document.getElementById('user-name');
+const adminBadge         = document.getElementById('admin-badge');
+const signOutBtn         = document.getElementById('sign-out-btn');
+const guestInfo          = document.getElementById('guest-info');
+const adminSignInFromGuest = document.getElementById('admin-signin-from-guest');
+const addTaskBtn         = document.getElementById('add-task-btn');
+const fabBtn             = document.getElementById('fab-btn');
+const tabs               = document.querySelectorAll('.tab');
+const myTasksPanel       = document.getElementById('my-tasks-panel');
+const publicPanel        = document.getElementById('public-feed-panel');
+const viewSwitcher       = document.getElementById('view-switcher');
+const board              = document.getElementById('board');
+const emptyState         = document.getElementById('empty-state');
+const authPrompt         = document.getElementById('auth-prompt');
+const feedList           = document.getElementById('feed-list');
+const feedEmpty          = document.getElementById('feed-empty');
+const modalOverlay       = document.getElementById('modal-overlay');
+const modalTitle         = document.getElementById('modal-title');
+const taskForm           = document.getElementById('task-form');
+const taskIdInput        = document.getElementById('task-id');
+const titleInput         = document.getElementById('task-title');
+const descInput          = document.getElementById('task-description');
+const dueDateInput       = document.getElementById('task-due-date');
+const categorySelect     = document.getElementById('task-category');
+const assigneeSelect     = document.getElementById('task-assignee');
+const visInputs          = document.querySelectorAll('input[name="visibility"]');
+const cancelBtn          = document.getElementById('cancel-btn');
+const titleError         = document.getElementById('title-error');
+const catModalOv         = document.getElementById('cat-modal-overlay');
+const catForm            = document.getElementById('cat-form');
+const catNameInput       = document.getElementById('cat-name');
+const catCancelBtn       = document.getElementById('cat-cancel-btn');
+const colorPickerEl      = document.getElementById('color-picker');
+const settingsBtn        = document.getElementById('settings-btn');
+const settingsOv         = document.getElementById('settings-overlay');
+const settingsClose      = document.getElementById('settings-close');
+const settingsDone       = document.getElementById('settings-done');
+const accentPickerEl     = document.getElementById('accent-picker');
+const bgPickerEl         = document.getElementById('bg-picker');
+const detailOverlay      = document.getElementById('detail-overlay');
+const detailContent      = document.getElementById('detail-content');
+const detailClose        = document.getElementById('detail-close');
+const toastEl            = document.getElementById('toast');
 
 // ── Theme ─────────────────────────────────────────────────────────────────────
 const mql = window.matchMedia('(prefers-color-scheme: dark)');
@@ -108,14 +115,12 @@ function savePrefs(updates) {
   localStorage.setItem(PREFS_KEY, JSON.stringify(p));
   return p;
 }
-
 function applyTheme(theme) {
   const isDark = theme === 'dark' || (theme === 'system' && mql.matches);
   document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
   document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
   applyBg(loadPrefs().bg || 'default', isDark);
 }
-
 function applyAccent(color) {
   const a = ACCENT_COLORS.find(x => x.color === color) || ACCENT_COLORS[0];
   document.documentElement.style.setProperty('--primary', a.color);
@@ -123,26 +128,22 @@ function applyAccent(color) {
   document.documentElement.style.setProperty('--primary-rgb', hexToRgb(a.color));
   document.querySelectorAll('.accent-swatch').forEach(s => s.classList.toggle('selected', s.dataset.color === a.color));
 }
-
 function applyBg(bgId, isDark) {
   if (isDark === undefined) isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const bg = BG_OPTIONS.find(b => b.id === bgId) || BG_OPTIONS[0];
   document.documentElement.style.setProperty('--page-bg', isDark ? bg.dark : bg.light);
   document.querySelectorAll('.bg-tile').forEach(t => t.classList.toggle('selected', t.dataset.bg === bgId));
 }
-
 function hexToRgb(hex) {
   const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
   return `${r},${g},${b}`;
 }
-
 function initTheme() {
   const p = loadPrefs();
   applyTheme(p.theme || 'system');
   applyAccent(p.accent || '#1c69d4');
   applyBg(p.bg || 'default');
 }
-
 mql.addEventListener('change', () => {
   const p = loadPrefs();
   if (!p.theme || p.theme === 'system') applyTheme('system');
@@ -156,7 +157,7 @@ function openSettings() {
   ACCENT_COLORS.forEach(a => {
     const sw = document.createElement('button');
     sw.type = 'button';
-    sw.className = 'accent-swatch' + (a.color === (p.accent || '#4f46e5') ? ' selected' : '');
+    sw.className = 'accent-swatch' + (a.color === (p.accent || '#1c69d4') ? ' selected' : '');
     sw.dataset.color = a.color;
     sw.style.background = a.color;
     sw.title = a.name;
@@ -178,26 +179,38 @@ function openSettings() {
   });
   settingsOv.classList.remove('hidden');
 }
-
 function closeSettings() { settingsOv.classList.add('hidden'); }
+
+// ── Guest storage helpers ─────────────────────────────────────────────────────
+function loadGuestTasks()  { try { return JSON.parse(sessionStorage.getItem(GUEST_TASKS_KEY)) || []; } catch { return []; } }
+function saveGuestTasks()  { sessionStorage.setItem(GUEST_TASKS_KEY, JSON.stringify(myTasks)); }
+function loadGuestCats()   { try { return JSON.parse(sessionStorage.getItem(GUEST_CATS_KEY))  || []; } catch { return []; } }
+function saveGuestCats()   { sessionStorage.setItem(GUEST_CATS_KEY, JSON.stringify(categories)); }
+
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 auth.onAuthStateChanged(async user => {
   currentUser = user;
   if (user) {
-    // Save/update user profile so others can see them in assign-to dropdown
-    db.collection('users').doc(user.uid).set({
-      uid: user.uid,
-      name: user.displayName || '',
-      email: user.email || '',
-      photo: user.photoURL || '',
-    }, { merge: true }).catch(() => {});
+    // Admin signed in (via email/password)
+    isGuestMode = false;
+    // Tear down any existing guest data from memory
+    myTasks = []; assignedTasks = []; allTasks = []; categories = []; allUsers = [];
 
-    // Check admin status
+    // Check admin status in Firestore
     try {
       const adminDoc = await db.collection('admins').doc(user.uid).get();
       isAdmin = adminDoc.exists;
     } catch { isAdmin = false; }
+
+    // Save user profile for assign-to dropdown
+    db.collection('users').doc(user.uid).set({
+      uid:   user.uid,
+      name:  user.displayName || user.email || '',
+      email: user.email || '',
+      photo: user.photoURL || '',
+    }, { merge: true }).catch(() => {});
 
     updateAuthUI();
     subscribeMyTasks();
@@ -205,7 +218,9 @@ auth.onAuthStateChanged(async user => {
     subscribeCats();
     subscribeUsers();
     if (isAdmin) subscribeAllTasks();
-  } else {
+
+  } else if (!isGuestMode) {
+    // Not logged in and not in guest mode → show welcome screen
     isAdmin = false;
     [unsubMyTasks, unsubAssigned, unsubAllTasks, unsubCats, unsubUsers].forEach(u => u && u());
     unsubMyTasks = unsubAssigned = unsubAllTasks = unsubCats = unsubUsers = null;
@@ -216,25 +231,59 @@ auth.onAuthStateChanged(async user => {
 });
 
 function updateAuthUI() {
-  const on = !!currentUser;
-  welcomeScreen.classList.toggle('hidden', on);
-  signInBtn.classList.toggle('hidden', on);
-  userInfo.classList.toggle('hidden', !on);
-  addTaskBtn.classList.toggle('hidden', !on);
-  fabBtn.classList.toggle('hidden', !on);
-  viewSwitcher.classList.toggle('hidden', !on);
-  if (on) {
-    userPhoto.src = currentUser.photoURL || '';
-    userNameEl.textContent = currentUser.displayName || currentUser.email;
+  const adminOn = !!currentUser;
+  const anyOn   = adminOn || isGuestMode;
+
+  welcomeScreen.classList.toggle('hidden', anyOn);
+  userInfo.classList.toggle('hidden', !adminOn);
+  guestInfo.classList.toggle('hidden', !isGuestMode);
+  addTaskBtn.classList.toggle('hidden', !anyOn);
+  fabBtn.classList.toggle('hidden', !anyOn);
+  viewSwitcher.classList.toggle('hidden', !anyOn);
+
+  if (adminOn) {
+    userNameEl.textContent = currentUser.displayName || currentUser.email || 'Admin';
     adminBadge.classList.toggle('hidden', !isAdmin);
     document.querySelectorAll('.admin-only').forEach(el => el.classList.toggle('hidden', !isAdmin));
   }
 }
 
-function signIn()    { auth.signInWithPopup(googleProvider).catch(e => showToast('Sign-in failed: ' + e.message)); }
-function doSignOut() { if (confirm('Sign out?')) auth.signOut(); }
+function signInAdmin(password) {
+  loginError.classList.add('hidden');
+  auth.signInWithEmailAndPassword(ADMIN_EMAIL, password)
+    .catch(() => {
+      loginError.textContent = 'Incorrect password. Please try again.';
+      loginError.classList.remove('hidden');
+      passwordInput.value = '';
+      passwordInput.focus();
+    });
+}
 
-// ── Subscriptions ─────────────────────────────────────────────────────────────
+function enterGuestMode() {
+  isGuestMode = true;
+  myTasks     = loadGuestTasks();
+  categories  = loadGuestCats();
+  updateAuthUI();
+  populateCategorySelect();
+  refreshMyTasks();
+}
+
+function doSignOut() {
+  if (!confirm('Sign out?')) return;
+  auth.signOut();
+}
+
+function exitGuestMode() {
+  if (!confirm('End guest session? All unsaved tasks will be lost.')) return;
+  isGuestMode = false;
+  myTasks = []; categories = [];
+  sessionStorage.removeItem(GUEST_TASKS_KEY);
+  sessionStorage.removeItem(GUEST_CATS_KEY);
+  updateAuthUI();
+  refreshMyTasks();
+}
+
+// ── Subscriptions (admin / Firestore only) ────────────────────────────────────
 function subscribeMyTasks() {
   if (unsubMyTasks) unsubMyTasks();
   unsubMyTasks = db.collection('tasks').where('uid', '==', currentUser.uid)
@@ -295,24 +344,23 @@ function subscribeFeed() {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function genToken() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+function genToken() { return genId(); }
 
 function todayISO() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
-
 function offsetISO(days) {
   const d = new Date(); d.setDate(d.getDate() + days);
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
 function dueBadge(task) {
-  if (task.completed)    return { label:'Done',     cls:'badge-done' };
-  if (!task.dueDate)     return null;
+  if (task.completed)     return { label:'Done',     cls:'badge-done' };
+  if (!task.dueDate)      return null;
   const t = todayISO();
-  if (task.dueDate < t)  return { label:'Overdue',   cls:'badge-overdue' };
-  if (task.dueDate === t) return { label:'Due Today', cls:'badge-today' };
+  if (task.dueDate < t)   return { label:'Overdue',   cls:'badge-overdue' };
+  if (task.dueDate === t)  return { label:'Due Today', cls:'badge-today' };
   return { label:'Upcoming', cls:'badge-upcoming' };
 }
 
@@ -344,6 +392,13 @@ function catFor(id) { return categories.find(c => c.id === id); }
 
 // ── My Tasks dispatcher ───────────────────────────────────────────────────────
 function refreshMyTasks() {
+  if (!currentUser && !isGuestMode) {
+    board.innerHTML = '';
+    authPrompt.classList.remove('hidden');
+    emptyState.classList.add('hidden');
+    return;
+  }
+  authPrompt.classList.add('hidden');
   if (activeView === 'board')    renderBoard();
   else if (activeView === 'assigned') renderAssignedView();
   else if (activeView === 'admin')    renderAdminView();
@@ -353,11 +408,9 @@ function refreshMyTasks() {
 // ── Board view ────────────────────────────────────────────────────────────────
 function renderBoard() {
   board.innerHTML = '';
-  if (!currentUser) { authPrompt.classList.remove('hidden'); emptyState.classList.add('hidden'); return; }
-  authPrompt.classList.add('hidden');
-
   const hasContent = categories.length > 0 || myTasks.length > 0;
   emptyState.classList.toggle('hidden', hasContent);
+
   if (!hasContent) {
     const p = document.createElement('div');
     p.className = 'board-empty-prompt';
@@ -406,7 +459,10 @@ function buildLane(cat, tasks, isUncat = false) {
   const body = lane.querySelector('.lane-body');
   tasks.forEach(t => body.appendChild(buildCard(t)));
 
-  new Sortable(body, { group:'tasks', animation:150, ghostClass:'card-ghost', chosenClass:'card-chosen', onEnd:handleDrop });
+  // Drag-and-drop only in admin mode (Firestore backed)
+  if (!isGuestMode) {
+    new Sortable(body, { group:'tasks', animation:150, ghostClass:'card-ghost', chosenClass:'card-chosen', onEnd:handleDrop });
+  }
 
   const catId = isUncat ? null : cat.id;
   lane.querySelector('.lane-add-btn').addEventListener('click', () => openModal(null, catId));
@@ -428,19 +484,20 @@ function buildCard(task, showCat = false, adminMode = false) {
     : showCat && !cat
     ? `<span class="cat-chip" style="--chip-color:#94a3b8">Uncategorized</span>`
     : '';
-  const visBadge = task.visibility === 'public' ? '<span class="badge badge-public">Public</span>' : '';
-  const shareBtn = task.visibility === 'public' ? `<button class="btn btn-share share-btn">&#128279;</button>` : '';
+  const visBadge    = !isGuestMode && task.visibility === 'public' ? '<span class="badge badge-public">Public</span>' : '';
+  const shareBtn    = !isGuestMode && task.visibility === 'public' ? `<button class="btn btn-share share-btn">&#128279;</button>` : '';
   const assigneeChip = task.assigneeId
     ? `<span class="assignee-chip">&#128100; ${escapeHTML(task.assigneeName || 'Assigned')}</span>`
     : '';
   const ownerChip = adminMode && task.ownerName
     ? `<span class="owner-chip">by ${escapeHTML(task.ownerName)}</span>`
     : '';
+  const guestChip = isGuestMode ? `<span class="guest-data-badge">Session only</span>` : '';
 
-  const canEdit = isAdmin || (currentUser && task.uid === currentUser.uid);
+  const canEdit = adminMode ? isAdmin : true;
 
   card.innerHTML = `
-    ${catChip || ownerChip ? `<div class="card-cat-row">${catChip}${ownerChip}</div>` : ''}
+    ${catChip || ownerChip ? `<div class="card-cat-row">${catChip}${ownerChip}${guestChip}</div>` : (guestChip ? `<div class="card-cat-row">${guestChip}</div>` : '')}
     <div class="task-card-top">
       <input type="checkbox" class="task-checkbox" aria-label="Mark complete" ${task.completed ? 'checked' : ''} />
       <span class="task-title">${escapeHTML(task.title)}</span>
@@ -464,7 +521,7 @@ function buildCard(task, showCat = false, adminMode = false) {
     card.querySelector('.edit-btn').addEventListener('click', () => openModal(task));
     card.querySelector('.delete-btn').addEventListener('click', () => deleteTask(task.id));
   }
-  if (task.visibility === 'public') {
+  if (!isGuestMode && task.visibility === 'public') {
     card.querySelector('.share-btn').addEventListener('click', () => copyShareLink(task.shareToken));
   }
 
@@ -472,7 +529,7 @@ function buildCard(task, showCat = false, adminMode = false) {
 }
 
 async function handleDrop(evt) {
-  if (evt.from === evt.to) return;
+  if (isGuestMode || evt.from === evt.to) return;
   const taskId = evt.item.dataset.taskId;
   if (!taskId) return;
   const rawId = evt.to.dataset.catId;
@@ -490,8 +547,6 @@ const SMART_LABELS = {
 
 function renderSmartView(view) {
   board.innerHTML = '';
-  if (!currentUser) { authPrompt.classList.remove('hidden'); return; }
-  authPrompt.classList.add('hidden');
   emptyState.classList.add('hidden');
 
   const today   = todayISO();
@@ -522,11 +577,8 @@ function renderSmartView(view) {
   board.appendChild(grid);
 }
 
-// ── Assigned to Me view ───────────────────────────────────────────────────────
 function renderAssignedView() {
   board.innerHTML = '';
-  if (!currentUser) { authPrompt.classList.remove('hidden'); return; }
-  authPrompt.classList.add('hidden');
   emptyState.classList.add('hidden');
 
   const header = document.createElement('div');
@@ -548,11 +600,9 @@ function renderAssignedView() {
   board.appendChild(grid);
 }
 
-// ── Admin: All Tasks view ─────────────────────────────────────────────────────
 function renderAdminView() {
   board.innerHTML = '';
-  if (!currentUser || !isAdmin) return;
-  authPrompt.classList.add('hidden');
+  if (!isAdmin) return;
   emptyState.classList.add('hidden');
 
   const header = document.createElement('div');
@@ -629,15 +679,16 @@ function switchView(view) {
 
 // ── Task Modal ────────────────────────────────────────────────────────────────
 function openModal(task, catId = null) {
-  if (!currentUser) { signIn(); return; }
-  taskIdInput.value     = task?.id || '';
-  titleInput.value      = task?.title || '';
-  descInput.value       = task?.description || '';
-  dueDateInput.value    = task?.dueDate || '';
+  taskIdInput.value  = task?.id || '';
+  titleInput.value   = task?.title || '';
+  descInput.value    = task?.description || '';
+  dueDateInput.value = task?.dueDate || '';
   setVis(task?.visibility || 'private');
   populateCategorySelect(task?.categoryId ?? catId);
   populateAssigneeSelect(task?.assigneeId || '');
   modalTitle.textContent = task ? 'Edit Task' : 'Add Task';
+  // Hide visibility and assignee in guest mode
+  document.querySelectorAll('.vis-form-group, .assignee-form-group').forEach(el => el.classList.toggle('hidden', isGuestMode));
   titleInput.classList.remove('invalid');
   titleError.classList.add('hidden');
   modalOverlay.classList.remove('hidden');
@@ -651,6 +702,31 @@ async function handleFormSubmit(e) {
   const title = titleInput.value.trim();
   if (!title) { titleInput.classList.add('invalid'); titleError.classList.remove('hidden'); titleInput.focus(); return; }
 
+  // ── Guest path ──
+  if (isGuestMode) {
+    const id = taskIdInput.value;
+    const patch = {
+      title,
+      description: descInput.value.trim(),
+      dueDate:     dueDateInput.value,
+      categoryId:  categorySelect.value || null,
+      visibility:  'private',
+      assigneeId:  null,
+      assigneeName: '',
+    };
+    if (id) {
+      const idx = myTasks.findIndex(t => t.id === id);
+      if (idx !== -1) myTasks[idx] = { ...myTasks[idx], ...patch };
+    } else {
+      myTasks.unshift({ id: genId(), ...patch, completed: false, createdAt: Date.now() });
+    }
+    saveGuestTasks();
+    closeModal();
+    refreshMyTasks();
+    return;
+  }
+
+  // ── Admin / Firestore path ──
   const id = taskIdInput.value;
   const assigneeId   = assigneeSelect.value || null;
   const assigneeUser = assigneeId ? allUsers.find(u => u.id === assigneeId) : null;
@@ -658,50 +734,59 @@ async function handleFormSubmit(e) {
 
   try {
     if (id) {
-      // Update: only touch editable fields — preserve uid/ownerName/ownerPhoto of original owner
       await db.collection('tasks').doc(id).update({
         title,
         description: descInput.value.trim(),
-        dueDate: dueDateInput.value,
-        categoryId: categorySelect.value || null,
-        visibility: getVis(),
-        assigneeId,
-        assigneeName,
+        dueDate:     dueDateInput.value,
+        categoryId:  categorySelect.value || null,
+        visibility:  getVis(),
+        assigneeId, assigneeName,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
     } else {
-      // Create: set full ownership from current user
       await db.collection('tasks').add({
-        uid: currentUser.uid,
-        ownerName: currentUser.displayName || '',
+        uid:       currentUser.uid,
+        ownerName: currentUser.displayName || currentUser.email || '',
         ownerPhoto: currentUser.photoURL || '',
         title,
         description: descInput.value.trim(),
-        dueDate: dueDateInput.value,
+        dueDate:    dueDateInput.value,
         categoryId: categorySelect.value || null,
         visibility: getVis(),
-        assigneeId,
-        assigneeName,
-        completed: false,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        assigneeId, assigneeName,
+        completed:  false,
+        createdAt:  firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt:  firebase.firestore.FieldValue.serverTimestamp(),
         shareToken: genToken(),
       });
     }
     closeModal();
-    if (assigneeId && assigneeId !== currentUser.uid) {
-      showToast(`Assigned to ${assigneeName || 'user'}`);
-    }
+    if (assigneeId && assigneeId !== currentUser.uid) showToast(`Assigned to ${assigneeName || 'user'}`);
   } catch (err) { showToast('Error saving: ' + err.message); }
 }
 
 async function deleteTask(id) {
   if (!confirm('Delete this task?')) return;
+
+  if (isGuestMode) {
+    myTasks = myTasks.filter(t => t.id !== id);
+    saveGuestTasks();
+    refreshMyTasks();
+    return;
+  }
+
   try { await db.collection('tasks').doc(id).delete(); }
   catch (err) { showToast('Error: ' + err.message); }
 }
 
 async function toggleComplete(id, current) {
+  if (isGuestMode) {
+    const idx = myTasks.findIndex(t => t.id === id);
+    if (idx !== -1) myTasks[idx] = { ...myTasks[idx], completed: !current };
+    saveGuestTasks();
+    refreshMyTasks();
+    return;
+  }
   try { await db.collection('tasks').doc(id).update({ completed: !current }); }
   catch (e) { console.error(e); }
 }
@@ -730,7 +815,6 @@ function populateAssigneeSelect(selectedId = '') {
 
 // ── Category Modal ────────────────────────────────────────────────────────────
 function openCatModal() {
-  if (!currentUser) { signIn(); return; }
   selectedColor = LANE_COLORS[0];
   catNameInput.value = '';
   renderColorPicker();
@@ -755,6 +839,16 @@ async function handleCatSubmit(e) {
   e.preventDefault();
   const name = catNameInput.value.trim();
   if (!name) return;
+
+  if (isGuestMode) {
+    categories.push({ id: genId(), name, color: selectedColor, order: categories.length, createdAt: Date.now() });
+    saveGuestCats();
+    closeCatModal();
+    populateCategorySelect();
+    refreshMyTasks();
+    return;
+  }
+
   try {
     await db.collection('categories').add({
       uid: currentUser.uid, name, color: selectedColor,
@@ -767,6 +861,17 @@ async function handleCatSubmit(e) {
 
 async function deleteCat(id, name) {
   if (!confirm(`Delete "${name}"?\n\nTasks will move to Uncategorized.`)) return;
+
+  if (isGuestMode) {
+    myTasks = myTasks.map(t => t.categoryId === id ? { ...t, categoryId: null } : t);
+    categories = categories.filter(c => c.id !== id);
+    saveGuestTasks();
+    saveGuestCats();
+    populateCategorySelect();
+    refreshMyTasks();
+    return;
+  }
+
   try {
     const batch = db.batch();
     myTasks.filter(t => t.categoryId === id).forEach(t => batch.update(db.collection('tasks').doc(t.id), { categoryId: null }));
@@ -789,7 +894,7 @@ async function loadSharedTask(token) {
           ? `<img src="${escapeHTML(task.ownerPhoto)}" class="owner-avatar" alt="" />`
           : `<div class="owner-avatar owner-avatar-fallback">${escapeHTML((task.ownerName||'?')[0])}</div>`;
         detailContent.innerHTML = `
-          <div class="task-owner" style="margin-bottom:.8rem">${av}<span class="owner-name">${escapeHTML(task.ownerName||'Anonymous')}</span></div>
+          <div class="task-owner" style="margin-bottom:.8rem">${av}<span class="owner-name">${escapeHTML(task.ownerName||'Admin')}</span></div>
           <h3 style="font-size:1.1rem;margin-bottom:.4rem">${escapeHTML(task.title)}</h3>
           ${task.description ? `<p style="color:var(--text-muted);font-size:.9rem;line-height:1.5;margin-bottom:.6rem">${escapeHTML(task.description)}</p>` : ''}
           <div class="task-meta">
@@ -803,9 +908,33 @@ async function loadSharedTask(token) {
 }
 
 // ── Event listeners ───────────────────────────────────────────────────────────
-welcomeSignIn.addEventListener('click', signIn);
-signInBtn.addEventListener('click', signIn);
+
+// Welcome screen
+adminLoginForm.addEventListener('submit', e => {
+  e.preventDefault();
+  const pw = passwordInput.value;
+  if (!pw) return;
+  signInAdmin(pw);
+});
+welcomeGuestBtn.addEventListener('click', () => {
+  if (isGuestMode) {
+    // Already in guest mode, just hide the welcome screen (came from "Admin Sign In" button)
+    welcomeScreen.classList.add('hidden');
+  } else {
+    enterGuestMode();
+  }
+});
+
+// Auth bar
 signOutBtn.addEventListener('click', doSignOut);
+adminSignInFromGuest.addEventListener('click', () => {
+  // Re-show welcome screen so they can enter the password
+  passwordInput.value = '';
+  loginError.classList.add('hidden');
+  welcomeScreen.classList.remove('hidden');
+});
+
+// App controls
 addTaskBtn.addEventListener('click', () => openModal(null));
 fabBtn.addEventListener('click', () => openModal(null));
 cancelBtn.addEventListener('click', closeModal);
@@ -828,9 +957,17 @@ modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) clo
 catModalOv.addEventListener('click', e => { if (e.target === catModalOv) closeCatModal(); });
 settingsOv.addEventListener('click', e => { if (e.target === settingsOv) closeSettings(); });
 detailOverlay.addEventListener('click', e => { if (e.target === detailOverlay) detailOverlay.classList.add('hidden'); });
+welcomeScreen.addEventListener('click', e => {
+  // If in guest mode and welcome screen re-shown for sign-in, clicking backdrop dismisses it
+  if (isGuestMode && e.target === welcomeScreen) welcomeScreen.classList.add('hidden');
+});
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeModal(); closeCatModal(); closeSettings(); detailOverlay.classList.add('hidden'); }
+  if (e.key === 'Escape') {
+    closeModal(); closeCatModal(); closeSettings();
+    detailOverlay.classList.add('hidden');
+    if (isGuestMode) welcomeScreen.classList.add('hidden');
+  }
 });
 
 titleInput.addEventListener('input', () => {

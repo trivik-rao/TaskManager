@@ -59,15 +59,20 @@
         <li><span class="wlc-dot"></span>Admin controls for full oversight</li>
       </ul>
 
-      <button id="welcome-sign-in" class="wlc-signin-btn">
-        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-          <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908C16.658 14.013 17.64 11.705 17.64 9.2z" fill="#4285F4"/>
-          <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
-          <path d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
-          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
-        </svg>
-        Continue with Google
-      </button>
+      <!-- Admin sign-in form -->
+      <form id="admin-login-form" class="wlc-login-form" novalidate>
+        <input type="password" id="admin-password"
+               placeholder="Admin password"
+               autocomplete="current-password"
+               class="wlc-pw-input" />
+        <button type="submit" class="wlc-signin-btn">Sign In as Admin</button>
+        <p id="login-error" class="wlc-login-error hidden"></p>
+      </form>
+
+      <div class="wlc-or"><span>or</span></div>
+
+      <button id="welcome-guest-btn" class="wlc-guest-btn">Continue as Guest</button>
+      <p class="wlc-guest-note">Guest tasks are saved in this session only and won't be stored anywhere.</p>
 
       <p class="wlc-tagline">Sheer Productivity.</p>
     </div>
@@ -77,20 +82,17 @@
 
   <!-- ── App ─────────────────────────────────────────────────────────────── -->
   <div id="auth-bar">
-    <button id="sign-in-btn" class="btn btn-google">
-      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-        <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908C16.658 14.013 17.64 11.705 17.64 9.2z" fill="#4285F4"/>
-        <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
-        <path d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
-        <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
-      </svg>
-      Sign in with Google
-    </button>
+    <!-- Admin mode user info -->
     <div id="user-info" class="hidden">
-      <img id="user-photo" src="" alt="" class="user-avatar" />
+      <div class="admin-avatar-circle">A</div>
       <span id="user-name"></span>
       <span id="admin-badge" class="admin-badge hidden">Admin</span>
       <button id="sign-out-btn" class="btn btn-secondary btn-sm">Sign out</button>
+    </div>
+    <!-- Guest mode info -->
+    <div id="guest-info" class="hidden">
+      <span class="guest-badge">&#128100; Guest Session</span>
+      <button id="admin-signin-from-guest" class="btn btn-secondary btn-sm">Admin Sign In</button>
     </div>
     <button id="settings-btn" class="icon-btn" title="Appearance">&#9881;</button>
   </div>
@@ -127,7 +129,7 @@
         <button class="view-btn admin-only hidden" data-view="admin">&#128737; All Tasks</button>
       </div>
       <div id="auth-prompt" class="empty-state hidden">
-        <p>Sign in with Google to view and manage your tasks.</p>
+        <p>Sign in as Admin or continue as Guest to manage your tasks.</p>
       </div>
       <div id="empty-state" class="empty-state hidden">
         <p>No categories yet.<br>Click <strong>+ New Category</strong> to get started.</p>
@@ -170,13 +172,13 @@
             <option value="">— Uncategorized —</option>
           </select>
         </div>
-        <div class="form-group">
+        <div class="form-group assignee-form-group">
           <label for="task-assignee">Assign to</label>
           <select id="task-assignee">
             <option value="">— Unassigned —</option>
           </select>
         </div>
-        <div class="form-group">
+        <div class="form-group vis-form-group">
           <label>Visibility</label>
           <div class="visibility-toggle">
             <label class="vis-option">
