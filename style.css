@@ -470,3 +470,99 @@ html[data-theme="dark"] .toast { background: #f1f5f9; color: #0f172a; }
 
 /* ── Utility ─────────────────────────────────────────────────────────────── */
 .hidden { display: none !important; }
+
+/* ── Welcome / Login Screen (BMW-inspired) ───────────────────────────────── */
+#welcome-screen {
+  position: fixed; inset: 0; z-index: 500;
+  background: #090d14;
+  background-image: radial-gradient(ellipse 100% 65% at 50% 30%, rgba(28,105,212,0.09) 0%, transparent 70%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 0 1.5rem; overflow-y: auto;
+}
+
+.wlc-accent-bar {
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, transparent 0%, #1c69d4 25%, #4a90e2 50%, #1c69d4 75%, transparent 100%);
+}
+
+.wlc-content {
+  display: flex; flex-direction: column; align-items: center;
+  max-width: 500px; width: 100%; text-align: center;
+  padding: 3.5rem 0 5.5rem;
+}
+
+.wlc-logo-wrap {
+  margin-bottom: 2rem;
+  filter: drop-shadow(0 0 32px rgba(28,105,212,0.35));
+}
+
+.wlc-brand {
+  font-size: 0.62rem; font-weight: 800; letter-spacing: 0.45em;
+  color: #4a7db8; text-transform: uppercase; margin-bottom: 1.5rem;
+}
+
+.wlc-headline {
+  font-size: clamp(2.4rem, 7.5vw, 3.8rem);
+  font-weight: 300; line-height: 1.06;
+  color: #edf2f7; margin-bottom: 1.2rem;
+  letter-spacing: -0.02em;
+}
+.wlc-em { font-style: normal; font-weight: 700; color: #1c69d4; }
+
+.wlc-desc {
+  font-size: 0.88rem; color: #5d7a96; line-height: 1.75;
+  margin-bottom: 1.75rem; max-width: 360px;
+}
+
+.wlc-rule {
+  width: 40px; height: 2px; background: #1c69d4;
+  border-radius: 1px; margin: 0 auto 2rem;
+}
+
+.wlc-features {
+  list-style: none; margin: 0 0 2.5rem; padding: 0;
+  display: flex; flex-direction: column; gap: 0.65rem;
+  text-align: left; width: 100%; max-width: 310px;
+}
+.wlc-features li {
+  display: flex; align-items: center; gap: 0.7rem;
+  font-size: 0.8rem; color: #6b8aaa; font-weight: 500; letter-spacing: 0.01em;
+}
+.wlc-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: #1c69d4; flex-shrink: 0;
+}
+
+.wlc-signin-btn {
+  display: inline-flex; align-items: center; gap: 0.7rem;
+  padding: 0.9rem 2.25rem;
+  background: #1c69d4; color: #fff;
+  border: none; border-radius: 2px;
+  font-size: 0.875rem; font-weight: 700; letter-spacing: 0.04em;
+  cursor: pointer;
+  box-shadow: 0 4px 24px rgba(28,105,212,0.4);
+  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  margin-bottom: 2rem;
+}
+.wlc-signin-btn:hover {
+  background: #1558b0;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(28,105,212,0.55);
+}
+.wlc-signin-btn:active { transform: translateY(0); }
+
+.wlc-tagline {
+  font-size: 0.6rem; color: #2d4a63; letter-spacing: 0.35em; text-transform: uppercase;
+}
+
+.wlc-footer {
+  position: absolute; bottom: 1.25rem; left: 0; right: 0;
+  text-align: center; font-size: 0.65rem;
+  color: #1e3348; letter-spacing: 0.08em;
+}
+
+@media (max-width: 600px) {
+  .wlc-content { padding: 2rem 0 4.5rem; }
+  .wlc-headline { font-size: 2.3rem; }
+  .wlc-features { align-self: flex-start; }
+}

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#4f46e5" />
+  <meta name="theme-color" content="#1c69d4" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -15,6 +15,67 @@
 </head>
 <body>
 
+  <!-- ── Welcome / Login Screen ──────────────────────────────────────────── -->
+  <div id="welcome-screen">
+    <div class="wlc-accent-bar"></div>
+
+    <div class="wlc-content">
+      <!-- Roundel-inspired logo -->
+      <div class="wlc-logo-wrap">
+        <svg width="88" height="88" viewBox="0 0 88 88" fill="none" aria-hidden="true">
+          <circle cx="44" cy="44" r="42" stroke="#1c69d4" stroke-width="1.5" fill="none"/>
+          <circle cx="44" cy="44" r="33" fill="#090d14"/>
+          <!-- Quadrant top-right: blue -->
+          <path d="M44 11 A33 33 0 0 1 77 44 L44 44 Z" fill="#1c69d4"/>
+          <!-- Quadrant bottom-left: blue -->
+          <path d="M44 77 A33 33 0 0 1 11 44 L44 44 Z" fill="#1c69d4"/>
+          <!-- Quadrant top-left: off-white -->
+          <path d="M11 44 A33 33 0 0 1 44 11 L44 44 Z" fill="#dde6f0"/>
+          <!-- Quadrant bottom-right: off-white -->
+          <path d="M77 44 A33 33 0 0 1 44 77 L44 44 Z" fill="#dde6f0"/>
+          <!-- Center ring -->
+          <circle cx="44" cy="44" r="12" fill="#090d14" stroke="#1c69d4" stroke-width="1.5"/>
+          <!-- Checkmark -->
+          <polyline points="38.5,44 42.5,48 49.5,40" stroke="#1c69d4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </div>
+
+      <p class="wlc-brand">Task Manager</p>
+
+      <h1 class="wlc-headline">The Ultimate<br><em class="wlc-em">Task Machine.</em></h1>
+
+      <p class="wlc-desc">
+        Organize your work with precision.<br>
+        Collaborate, assign, and drive results — your team, your way.
+      </p>
+
+      <div class="wlc-rule"></div>
+
+      <ul class="wlc-features">
+        <li><span class="wlc-dot"></span>Kanban boards with drag &amp; drop</li>
+        <li><span class="wlc-dot"></span>Smart views: Today, This Week, Overdue</li>
+        <li><span class="wlc-dot"></span>Assign tasks to teammates</li>
+        <li><span class="wlc-dot"></span>Public &amp; private tasks with shareable links</li>
+        <li><span class="wlc-dot"></span>Admin controls for full oversight</li>
+      </ul>
+
+      <button id="welcome-sign-in" class="wlc-signin-btn">
+        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+          <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908C16.658 14.013 17.64 11.705 17.64 9.2z" fill="#4285F4"/>
+          <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
+          <path d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <p class="wlc-tagline">Sheer Productivity.</p>
+    </div>
+
+    <div class="wlc-footer">© 2026 Task Manager &middot; Crafted with precision</div>
+  </div>
+
+  <!-- ── App ─────────────────────────────────────────────────────────────── -->
   <div id="auth-bar">
     <button id="sign-in-btn" class="btn btn-google">
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
@@ -45,7 +106,6 @@
   </nav>
 
   <main>
-    <!-- My Tasks / Board -->
     <div id="my-tasks-panel">
       <div id="view-switcher" class="view-switcher hidden">
         <button class="view-btn active" data-view="board">&#9646; Board</button>
@@ -55,7 +115,6 @@
         <button class="view-btn" data-view="assigned">&#128100; Assigned to Me</button>
         <button class="view-btn admin-only hidden" data-view="admin">&#128737; All Tasks</button>
       </div>
-
       <div id="auth-prompt" class="empty-state hidden">
         <p>Sign in with Google to view and manage your tasks.</p>
       </div>
@@ -65,7 +124,6 @@
       <div id="board" class="board"></div>
     </div>
 
-    <!-- Public Feed -->
     <div id="public-feed-panel" class="hidden">
       <div id="feed-empty" class="empty-state hidden"><p>No public tasks yet.</p></div>
       <div id="feed-list" class="smart-grid"></div>
@@ -81,7 +139,6 @@
       <h2 id="modal-title">Add Task</h2>
       <form id="task-form" novalidate>
         <input type="hidden" id="task-id" />
-        <input type="hidden" id="task-owner-uid" />
 
         <div class="form-group">
           <label for="task-title">Title <span class="required">*</span></label>
@@ -96,7 +153,7 @@
           <label for="task-due-date">Due Date</label>
           <input type="date" id="task-due-date" />
         </div>
-        <div class="form-group" id="category-group">
+        <div class="form-group">
           <label for="task-category">Category</label>
           <select id="task-category">
             <option value="">— Uncategorized —</option>

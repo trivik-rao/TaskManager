@@ -56,6 +56,8 @@ const userInfo       = document.getElementById('user-info');
 const userPhoto      = document.getElementById('user-photo');
 const userNameEl     = document.getElementById('user-name');
 const adminBadge     = document.getElementById('admin-badge');
+const welcomeScreen  = document.getElementById('welcome-screen');
+const welcomeSignIn  = document.getElementById('welcome-sign-in');
 const addTaskBtn     = document.getElementById('add-task-btn');
 const fabBtn         = document.getElementById('fab-btn');
 const tabs           = document.querySelectorAll('.tab');
@@ -71,7 +73,6 @@ const modalOverlay   = document.getElementById('modal-overlay');
 const modalTitle     = document.getElementById('modal-title');
 const taskForm       = document.getElementById('task-form');
 const taskIdInput    = document.getElementById('task-id');
-const taskOwnerUid   = document.getElementById('task-owner-uid');
 const titleInput     = document.getElementById('task-title');
 const descInput      = document.getElementById('task-description');
 const dueDateInput   = document.getElementById('task-due-date');
@@ -216,6 +217,7 @@ auth.onAuthStateChanged(async user => {
 
 function updateAuthUI() {
   const on = !!currentUser;
+  welcomeScreen.classList.toggle('hidden', on);
   signInBtn.classList.toggle('hidden', on);
   userInfo.classList.toggle('hidden', !on);
   addTaskBtn.classList.toggle('hidden', !on);
@@ -628,7 +630,6 @@ function switchView(view) {
 function openModal(task, catId = null) {
   if (!currentUser) { signIn(); return; }
   taskIdInput.value     = task?.id || '';
-  taskOwnerUid.value    = task?.uid || currentUser.uid;
   titleInput.value      = task?.title || '';
   descInput.value       = task?.description || '';
   dueDateInput.value    = task?.dueDate || '';
@@ -649,34 +650,42 @@ async function handleFormSubmit(e) {
   const title = titleInput.value.trim();
   if (!title) { titleInput.classList.add('invalid'); titleError.classList.remove('hidden'); titleInput.focus(); return; }
 
-  const id       = taskIdInput.value;
-  const ownerUid = taskOwnerUid.value || currentUser.uid;
+  const id = taskIdInput.value;
   const assigneeId   = assigneeSelect.value || null;
   const assigneeUser = assigneeId ? allUsers.find(u => u.id === assigneeId) : null;
   const assigneeName = assigneeUser ? (assigneeUser.name || assigneeUser.email || '') : '';
 
-  const data = {
-    uid: ownerUid,
-    ownerName: currentUser.displayName || '',
-    ownerPhoto: currentUser.photoURL || '',
-    title,
-    description: descInput.value.trim(),
-    dueDate: dueDateInput.value,
-    categoryId: categorySelect.value || null,
-    visibility: getVis(),
-    assigneeId,
-    assigneeName,
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-  };
-
   try {
     if (id) {
-      await db.collection('tasks').doc(id).update(data);
+      // Update: only touch editable fields — preserve uid/ownerName/ownerPhoto of original owner
+      await db.collection('tasks').doc(id).update({
+        title,
+        description: descInput.value.trim(),
+        dueDate: dueDateInput.value,
+        categoryId: categorySelect.value || null,
+        visibility: getVis(),
+        assigneeId,
+        assigneeName,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
     } else {
-      data.completed  = false;
-      data.createdAt  = firebase.firestore.FieldValue.serverTimestamp();
-      data.shareToken = genToken();
-      await db.collection('tasks').add(data);
+      // Create: set full ownership from current user
+      await db.collection('tasks').add({
+        uid: currentUser.uid,
+        ownerName: currentUser.displayName || '',
+        ownerPhoto: currentUser.photoURL || '',
+        title,
+        description: descInput.value.trim(),
+        dueDate: dueDateInput.value,
+        categoryId: categorySelect.value || null,
+        visibility: getVis(),
+        assigneeId,
+        assigneeName,
+        completed: false,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        shareToken: genToken(),
+      });
     }
     closeModal();
     if (assigneeId && assigneeId !== currentUser.uid) {
@@ -793,6 +802,7 @@ async function loadSharedTask(token) {
 }
 
 // ── Event listeners ───────────────────────────────────────────────────────────
+welcomeSignIn.addEventListener('click', signIn);
 signInBtn.addEventListener('click', signIn);
 signOutBtn.addEventListener('click', doSignOut);
 addTaskBtn.addEventListener('click', () => openModal(null));
